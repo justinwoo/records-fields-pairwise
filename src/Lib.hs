@@ -25,6 +25,34 @@ type family GRowToList (r :: * -> *) :: [(Symbol, *)] where
     = GRowToList a
   GRowToList U1 = '[]
 
+type RowToList t = Sort (GRowToList (Rep t))
+
+-- Ord class for kinds
+class Ord' k where
+  type Cmp (a :: k) (b :: k) :: Ordering
+
+instance Ord' Symbol where
+  type Cmp a b = CmpSymbol a b
+
+instance Ord' Nat where
+  type Cmp a b = CmpNat a b
+
+instance Ord' k => Ord' (k, j) where
+  type Cmp '(a, x) '(b, y) = Cmp a b
+
+-- Sorting lists
+type family Sort (xs :: [k]) where
+  Sort (x ': xs) = Insert x (Sort xs)
+  Sort '[] = '[]
+
+type family Insert (x :: k) (xs :: [k]) where
+  Insert x (y ': ys) = Insert' (Cmp x y) x y ys
+  Insert x '[] = '[x]
+
+type family Insert' (ord :: Ordering) (x :: k) (y :: k) (ys :: [k]) where
+  Insert' 'LT x y ys = x ': y ': ys
+  Insert' _   x y ys = y ': Insert x ys
+
 type family (a :: [k]) ++ (b :: [k]) :: [k] where
   '[] ++ bs = bs
   (a ': as) ++ bs = a ': (as ++ bs)
@@ -60,8 +88,8 @@ instance
 pairwiseApply :: forall vals fns valsL fnsL
    . Generic fns
   => Generic vals
-  => fnsL ~ GRowToList (Rep fns)
-  => valsL ~ GRowToList (Rep vals)
+  => fnsL ~ RowToList fns
+  => valsL ~ RowToList vals
   => PairwiseApply
        fns fnsL
        vals valsL
