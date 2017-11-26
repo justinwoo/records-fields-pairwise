@@ -13,8 +13,8 @@ data Values = Values
   } deriving (Generic, Show)
 
 data Functions = Functions
-  { a :: Int -> Int
-  , b :: String -> String
+  { b :: String -> String
+  , a :: Int -> Int
   } deriving (Generic)
 
 values :: Values
